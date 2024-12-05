@@ -7,6 +7,8 @@ import (
 	"gorm.io/gorm"
 )
 
+var ErrUniqueNameViolation = fmt.Errorf("Name already exists")
+
 type Medicine struct {
 	ID           int       `json:"id" gorm:"column:id;primaryKey"`
 	Name         string    `json:"name" gorm:"column:name;unique" validate:"required"`
@@ -29,11 +31,27 @@ type MedType struct {
 
 // Model methods for database operations
 func (m *Medicine) Create(db *gorm.DB) error {
-	return db.Create(m).Error
+	err := db.Create(m).Error
+	if err != nil {
+		if err.Error() == "ERROR: duplicate key value violates unique constraint \"uni_medicines_name\" (SQLSTATE 23505)" {
+			return ErrUniqueNameViolation
+		} else {
+			return err
+		}
+	}
+	return nil
 }
 
 func (m *Medicine) Update(db *gorm.DB) error {
-	return db.Save(m).Error
+	err := db.Save(m).Error
+	if err != nil {
+		if err.Error() == "ERROR: duplicate key value violates unique constraint \"uni_medicines_name\" (SQLSTATE 23505)" {
+			return ErrUniqueNameViolation
+		} else {
+			return err
+		}
+	}
+	return nil
 }
 
 func GetMedicineByID(db *gorm.DB, id int) (*Medicine, error) {
@@ -72,18 +90,28 @@ func GetMedTypeByID(db *gorm.DB, id int) (*MedType, error) {
 
 func (m *MedType) Create(db *gorm.DB) error {
 	m.ID = 0 //To prevent id from being set by the client
-	return db.Create(m).Error
+	err := db.Create(m).Error
+	if err != nil {
+		if err.Error() == "ERROR: duplicate key value violates unique constraint \"uni_med_types_type\" (SQLSTATE 23505)" {
+			return ErrUniqueNameViolation
+		} else {
+			return err
+		}
+	}
+	return nil
 }
 
 func (m *MedType) Update(db *gorm.DB) error {
-	result:= db.Exec("UPDATE med_types SET type = ? WHERE id = ?", m.Type, m.ID)
-	if result.Error!=nil{
+	result := db.Exec("UPDATE med_types SET type = ? WHERE id = ?", m.Type, m.ID)
+	if result.Error != nil {
+		if result.Error.Error() == "ERROR: duplicate key value violates unique constraint \"uni_med_types_type\" (SQLSTATE 23505)" {
+			return ErrUniqueNameViolation
+		}
 		return result.Error
 	}
-	if result.RowsAffected==0{
+	if result.RowsAffected == 0 {
 		return fmt.Errorf("there is no such id")
 	}
-
 	return nil
 }
 

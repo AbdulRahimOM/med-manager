@@ -2,4 +2,5 @@ package respcode
 
 const (
 	INSUFFICIENT_STOCK = "INSUFFICIENT_STOCK"
+	DUPLICATE_NAME     = "DUPLICATE_NAME"
 )

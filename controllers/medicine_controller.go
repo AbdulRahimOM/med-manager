@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"med-manager/domain/request"
 	respcode "med-manager/domain/respcodes"
 	"med-manager/domain/response"
@@ -29,6 +28,9 @@ func (c *MedicineController) CreateMedicine(ctx *fiber.Ctx) error {
 	medicine := medicineReq.ToMedicine()
 
 	if err := medicine.Create(c.DB); err != nil {
+		if err == models.ErrUniqueNameViolation {
+			return response.CreateError(ctx, 400, respcode.DUPLICATE_NAME, err)
+		}
 		return response.DBErrorResponse(ctx, err)
 	}
 
@@ -70,6 +72,9 @@ func (c *MedicineController) UpdateMedicine(ctx *fiber.Ctx) error {
 	}
 
 	if err := medicine.Update(c.DB); err != nil {
+		if err == models.ErrUniqueNameViolation {
+			return response.CreateError(ctx, 400, respcode.DUPLICATE_NAME, err)
+		}
 		return response.DBErrorResponse(ctx, err)
 	}
 
@@ -134,8 +139,6 @@ func (c *MedicineController) UpdateMedType(ctx *fiber.Ctx) error {
 	if err != nil {
 		return response.InvalidURLParamResponse(ctx, "id", err)
 	}
-
-	fmt.Println("ID: ", medType.ID)
 
 	if err := medType.Update(c.DB); err != nil {
 		return response.DBErrorResponse(ctx, err)
