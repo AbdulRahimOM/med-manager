@@ -1,0 +1,11 @@
+* Need to manage the stocks
+    * Update/Add/Deduct stocks
+    * Set min and max stock requirement for each med
+    * Create bill showing final value of med to buy after deductions
+
+
+* Do we have to create a patient record?
+    * Add patient name and basic details
+        * Detailed information, if required, shall be put into patient descriptions
+    * Medicines and details - in each visit
+    * Get patient history by name, or just take from the list
