@@ -23,7 +23,7 @@ type Medicine struct {
 
 type MedType struct {
 	ID   int    `json:"id" gorm:"column:id;primaryKey"`
-	Type string `json:"type" gorm:"column:type"`
+	Type string `json:"type" gorm:"column:type;unique" validate:"required"`
 }
 
 // Model methods for database operations

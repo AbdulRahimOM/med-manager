@@ -8,7 +8,7 @@ import (
 
 type Patient struct {
 	ID          int            `json:"id" gorm:"column:id;primaryKey"`
-	Name        string         `json:"name" gorm:"column:name"`
+	Name        string         `json:"name" gorm:"column:name" validate:"required"`
 	Age         int            `json:"age" gorm:"column:age"`
 	Gender      string         `json:"gender" gorm:"column:gender"`
 	Contact     string         `json:"contact" gorm:"column:contact"`
