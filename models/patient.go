@@ -18,8 +18,6 @@ type Patient struct {
 }
 
 func (p *Patient) Create(db *gorm.DB) error {
-	p.ID = 0 //to prevent id from being set by the client
-	p.CreatedAt = time.Now()
 	return db.Create(p).Error
 }
 
@@ -44,6 +42,10 @@ func GetAllPatients(db *gorm.DB, offset, limit int) ([]Patient, error) {
 
 func DeletePatient(db *gorm.DB, id int) error {
 	return db.Delete(&Patient{}, id).Error
+}
+
+func UndoDeletePatient(db *gorm.DB, id int) error {
+	return db.Model(&Patient{}).Where("id = ?", id).Update("deleted_at", nil).Error
 }
 
 type Visit struct {

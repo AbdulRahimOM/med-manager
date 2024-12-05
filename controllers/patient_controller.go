@@ -87,6 +87,17 @@ func (c *PatientController) DeletePatient(ctx *fiber.Ctx) error {
 	return response.CreateSuccess(ctx, 200, respcode.SUCCESS, nil)
 }
 
+func (c *PatientController) UndoDeletePatient(ctx *fiber.Ctx) error {
+	id, err := ctx.ParamsInt("id")
+	if err != nil {
+		return response.InvalidURLParamResponse(ctx, "id", err)
+	}
+	if err := models.UndoDeletePatient(c.DB, id); err != nil {
+		return response.DBErrorResponse(ctx, err)
+	}
+	return response.CreateSuccess(ctx, 200, respcode.SUCCESS, nil)
+}
+
 func (c *PatientController) CreateVisit(ctx *fiber.Ctx) error {
 	VisitReq := new(request.VisitReq)
 	if ok, errResponse := validation.BindAndValidateJSONRequest(ctx, VisitReq); !ok {

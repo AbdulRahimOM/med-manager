@@ -60,11 +60,10 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 		patients.Get("/:id", patientController.GetPatient)
 		patients.Put("/:id", patientController.UpdatePatient)
 		patients.Delete("/:id", patientController.DeletePatient)
-
-		// Visit routes
-
+		patients.Put("/undodelete/:id", patientController.UndoDeletePatient)
 	}
 
+	// Visit routes
 	visits := app.Group("/visits")
 	{
 		visits.Post("/", patientController.CreateVisit)

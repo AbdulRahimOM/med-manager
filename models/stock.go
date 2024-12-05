@@ -88,7 +88,7 @@ func (sReq *StockUpdateRequest) DeductFromStock(db *gorm.DB) (error, int) {
 
 		if currentStock < stockChange.Quantity {
 			tx.Rollback()
-			return ErrInsufficientStock, 0
+			return ErrInsufficientStock, stockChange.MedicineID
 		}
 
 		//deduct stockChange.Quantity from Medicine.CurrentStock
