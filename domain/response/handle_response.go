@@ -16,6 +16,18 @@ type Response struct {
 	Data           interface{} `json:"data,omitempty"`
 }
 
+type ValidationErrorResponse struct {
+	Status       bool           `json:"status"`
+	ResponseCode string         `json:"resp_code"`
+	Errors       []InvalidField `json:"errors"`
+}
+
+type InvalidField struct {
+	FailedField string      `json:"field"`
+	Tag         string      `json:"tag"`
+	Value       interface{} `json:"value"`
+}
+
 func CreateError(ctx *fiber.Ctx, statusCode int, respcode string, err error) error {
 	return Response{
 		HttpStatusCode: statusCode,
