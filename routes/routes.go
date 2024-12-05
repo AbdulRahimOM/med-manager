@@ -25,11 +25,13 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	}
 
 	// Medicine type routes
-	// medTypes := api.Group("/medtypes")
+	medTypes := api.Group("/medtypes")
 	{
-		// medTypes.Get("/", medicineController.GetAllMedTypes)
-		// medTypes.Get("/:id", medicineController.GetMedType)
-
+		medTypes.Get("/", medicineController.GetAllMedTypes)
+		medTypes.Get("/:id", medicineController.GetMedType)
+		medTypes.Post("/", medicineController.CreateMedType)
+		medTypes.Put("/:id", medicineController.UpdateMedType)
+		medTypes.Delete("/:id", medicineController.DeleteMedType)
 	}
 
 	// Stock routes
@@ -44,11 +46,13 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 
 		stock.Get("updations/:id", stockController.GetStockUpdation)
 		stock.Put("updations/:id", stockController.UpdateStockUpdation)
-		stock.Delete("/:id", stockController.DeleteStockUpdation)
-	}
+		stock.Delete("updations/:id", stockController.DeleteStockUpdation)
 
-	stock.Get("/medicine/additions/:id", stockController.GetStockAdditionsByMedicineID)
-	stock.Get("/medicine/deductions/:id", stockController.GetStockDeductionsByMedicineID)
+		stock.Get("/medicine/:id", stockController.GetMedicineStockByMedicineID)
+		stock.Get("/medicine/additions/:id", stockController.GetStockAdditionsByMedicineID)
+		stock.Get("/medicine/deductions/:id", stockController.GetStockDeductionsByMedicineID)
+
+	}
 
 	// Patient routes
 	patientController := controllers.NewPatientController(db)
@@ -59,5 +63,16 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 		patients.Get("/:id", patientController.GetPatient)
 		patients.Put("/:id", patientController.UpdatePatient)
 		patients.Delete("/:id", patientController.DeletePatient)
+
+		// Visit routes
+		visits := api.Group("/visits")
+		{
+			visits.Post("/", patientController.CreateVisit)
+			visits.Get("/", patientController.GetAllVisits)
+			visits.Get("/:id", patientController.GetVisit)
+			visits.Put("/:id", patientController.UpdateVisit)
+			visits.Delete("/:id", patientController.DeleteVisit)
+			visits.Get("/patient/:id", patientController.GetAllVisitsByPatientID)
+		}
 	}
 }

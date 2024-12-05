@@ -291,3 +291,13 @@ func UpdateParticularsInAnStockUpdation(db *gorm.DB, stockUpdationID int, stockC
 
 	return tx.Commit().Error
 }
+
+func GetMedicineStockByMedicineID(db *gorm.DB, medicineID int) (int, error) {
+	var currentStock int
+	err := db.Raw("SELECT current_stock FROM medicines WHERE id = ?", medicineID).Scan(&currentStock).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return currentStock, nil
+}

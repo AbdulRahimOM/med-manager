@@ -78,131 +78,62 @@ func (c *MedicineController) DeleteMedicine(ctx *fiber.Ctx) error {
 	return response.CreateSuccess(ctx, 200, respcode.SUCCESS, nil)
 }
 
-// func (c *MedicineController) GetAllMedTypes(ctx *fiber.Ctx) error {
-// 	medTypes, err := models.GetAllMedTypes(c.DB)
-// 	if err != nil {
-// 		return response.DBErrorResponse(ctx, err)
-// 	}
-// 	return response.CreateSuccess(ctx, 200, respcode.SUCCESS, medTypes)
-// }
-
-// func (c *MedicineController) GetMedType(ctx *fiber.Ctx) error {
-// 	id, err := ctx.ParamsInt("id")
-// 	if err != nil {
-// 		return response.InvalidURLParamResponse(ctx, "id", err)
-// 	}
-// 	medType, err := models.GetMedTypeByID(c.DB, id)
-// 	if err != nil {
-// 		return response.DBErrorResponse(ctx, err)
-// 	}
-
-// 	return response.CreateSuccess(ctx, 200, respcode.SUCCESS, medType)
-// }
-
-func (c *MedicineController) GetStockAdditionsByMedicineID(ctx *fiber.Ctx) error {
-	medicineID, err := ctx.ParamsInt("medicine_id")
-	if err != nil {
-		return response.InvalidURLParamResponse(ctx, "medicine_id", err)
-	}
-	stockAdditions, err := models.GetStockUpdationParticularsByMedicineID(c.DB, medicineID)
+func (c *MedicineController) GetAllMedTypes(ctx *fiber.Ctx) error {
+	medTypes, err := models.GetAllMedTypes(c.DB)
 	if err != nil {
 		return response.DBErrorResponse(ctx, err)
 	}
-
-	return response.CreateSuccess(ctx, 200, respcode.SUCCESS, stockAdditions)
+	return response.CreateSuccess(ctx, 200, respcode.SUCCESS, medTypes)
 }
 
-func (c *MedicineController) GetStockDeductionsByMedicineID(ctx *fiber.Ctx) error {
-	medicineID, err := ctx.ParamsInt("medicine_id")
-	if err != nil {
-		return response.InvalidURLParamResponse(ctx, "medicine_id", err)
-	}
-	stockDeductions, err := models.GetStockUpdationParticularsByMedicineID(c.DB, medicineID)
-	if err != nil {
-		return response.DBErrorResponse(ctx, err)
-	}
-
-	return response.CreateSuccess(ctx, 200, respcode.SUCCESS, stockDeductions)
-}
-
-func (c *MedicineController) GetStockUpdation(ctx *fiber.Ctx) error {
+func (c *MedicineController) GetMedType(ctx *fiber.Ctx) error {
 	id, err := ctx.ParamsInt("id")
 	if err != nil {
 		return response.InvalidURLParamResponse(ctx, "id", err)
 	}
-	stockUpdation, err := models.GetStockUpdationByID(c.DB, id)
+	medType, err := models.GetMedTypeByID(c.DB, id)
 	if err != nil {
 		return response.DBErrorResponse(ctx, err)
 	}
 
-	return response.CreateSuccess(ctx, 200, respcode.SUCCESS, stockUpdation)
+	return response.CreateSuccess(ctx, 200, respcode.SUCCESS, medType)
 }
 
-func (c *MedicineController) UpdateStockUpdation(ctx *fiber.Ctx) error {
-	stockUpdations := new(models.UpdateStockUpdateRequest)
-	if ok, errResponse := validation.BindAndValidateJSONRequest(ctx, stockUpdations); !ok {
+func (c *MedicineController) CreateMedType(ctx *fiber.Ctx) error {
+	medType := new(models.MedType)
+	if ok, errResponse := validation.BindAndValidateJSONRequest(ctx, medType); !ok {
 		return errResponse
 	}
 
-	if err := models.UpdateParticularsInAnStockUpdation(c.DB, stockUpdations.ID, stockUpdations.StockChanges); err != nil {
+	if err := medType.Create(c.DB); err != nil {
 		return response.DBErrorResponse(ctx, err)
 	}
 
-	return response.CreateSuccess(ctx, 200, respcode.SUCCESS, nil)
+	return response.CreateSuccess(ctx, 201, respcode.SUCCESS, medType)
 }
 
-func (c *MedicineController) DeleteStockUpdation(ctx *fiber.Ctx) error {
+func (c *MedicineController) UpdateMedType(ctx *fiber.Ctx) error {
+	medType := new(models.MedType)
+	if ok, errResponse := validation.BindAndValidateJSONRequest(ctx, medType); !ok {
+		return errResponse
+	}
+
+	if err := medType.Update(c.DB); err != nil {
+		return response.DBErrorResponse(ctx, err)
+	}
+
+	return response.CreateSuccess(ctx, 200, respcode.SUCCESS, medType)
+}
+
+func (c *MedicineController) DeleteMedType(ctx *fiber.Ctx) error {
 	id, err := ctx.ParamsInt("id")
 	if err != nil {
 		return response.InvalidURLParamResponse(ctx, "id", err)
 	}
-	if err := models.DeleteStockUpdation(c.DB, id); err != nil {
+
+	if err := models.DeleteMedType(c.DB, id); err != nil {
 		return response.DBErrorResponse(ctx, err)
 	}
 
 	return response.CreateSuccess(ctx, 200, respcode.SUCCESS, nil)
 }
-
-func (c *MedicineController) DeleteStockUpdationParticulars(ctx *fiber.Ctx) error {
-	id, err := ctx.ParamsInt("id")
-	if err != nil {
-		return response.InvalidURLParamResponse(ctx, "id", err)
-	}
-
-	medID, err := ctx.ParamsInt("medicine_id")
-	if err != nil {
-		return response.InvalidURLParamResponse(ctx, "medicine_id", err)
-	}
-
-	if err := models.DeleteStockUpdationParticulars(c.DB, id, medID); err != nil {
-		return response.DBErrorResponse(ctx, err)
-	}
-
-	return response.CreateSuccess(ctx, 200, respcode.SUCCESS, nil)
-}
-
-// func (c *MedicineController) DeductFromStock(ctx *fiber.Ctx) error {
-// 	stockDeductions := new(models.StockUpdateRequest)
-// 	if ok, errResponse := validation.BindAndValidateJSONRequest(ctx, stockDeductions); !ok {
-// 		return errResponse
-// 	}
-
-// 	if err := models.DeductFromStock(c.DB, stockDeductions); err != nil {
-// 		return response.DBErrorResponse(ctx, err)
-// 	}
-
-// 	return response.CreateSuccess(ctx, 200, respcode.SUCCESS, nil)
-// }
-
-// func (c *MedicineController) AddToStock(ctx *fiber.Ctx) error {
-// 	stockAdditions := new(models.StockUpdateRequest)
-// 	if ok, errResponse := validation.BindAndValidateJSONRequest(ctx, stockAdditions); !ok {
-// 		return errResponse
-// 	}
-
-// 	if err := models.AddToStock(c.DB, stockAdditions); err != nil {
-// 		return response.DBErrorResponse(ctx, err)
-// 	}
-
-// 	return response.CreateSuccess(ctx, 200, respcode.SUCCESS, nil)
-// }

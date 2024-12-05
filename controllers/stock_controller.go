@@ -18,37 +18,6 @@ func NewStockController(db *gorm.DB) *StockController {
 	return &StockController{DB: db}
 }
 
-func (c *StockController) AddToStock(ctx *fiber.Ctx) error {
-	stockUpdationReq := new(models.StockUpdateRequest)
-	if ok, errResponse := validation.BindAndValidateJSONRequest(ctx, stockUpdationReq); !ok {
-		return errResponse
-	}
-
-	if err := stockUpdationReq.AddToStock(c.DB); err != nil {
-		return response.DBErrorResponse(ctx, err)
-	}
-
-	return response.CreateSuccess(ctx, 201, respcode.SUCCESS, nil)
-}
-
-func (c *StockController) GetAllStockAdditions(ctx *fiber.Ctx) error {
-	page, err := ctx.ParamsInt("page")
-	if err != nil {
-		return response.InvalidURLParamResponse(ctx, "page", err)
-	}
-
-	limit, err := ctx.ParamsInt("limit")
-	if err != nil {
-		return response.InvalidURLParamResponse(ctx, "limit", err)
-	}
-
-	stockAdditions, err := models.GetAllStockUpdations(c.DB, true, page, limit)
-	if err != nil {
-		return response.DBErrorResponse(ctx, err)
-	}
-	return response.CreateSuccess(ctx, 200, respcode.SUCCESS, stockAdditions)
-}
-
 func (c *StockController) GetStockUpdation(ctx *fiber.Ctx) error {
 	id, err := ctx.ParamsInt("id")
 	if err != nil {
@@ -85,6 +54,37 @@ func (c *StockController) DeleteStockUpdation(ctx *fiber.Ctx) error {
 	}
 
 	return response.CreateSuccess(ctx, 200, respcode.SUCCESS, nil)
+}
+
+func (c *StockController) AddToStock(ctx *fiber.Ctx) error {
+	stockUpdationReq := new(models.StockUpdateRequest)
+	if ok, errResponse := validation.BindAndValidateJSONRequest(ctx, stockUpdationReq); !ok {
+		return errResponse
+	}
+
+	if err := stockUpdationReq.AddToStock(c.DB); err != nil {
+		return response.DBErrorResponse(ctx, err)
+	}
+
+	return response.CreateSuccess(ctx, 201, respcode.SUCCESS, nil)
+}
+
+func (c *StockController) GetAllStockAdditions(ctx *fiber.Ctx) error {
+	page, err := ctx.ParamsInt("page")
+	if err != nil {
+		return response.InvalidURLParamResponse(ctx, "page", err)
+	}
+
+	limit, err := ctx.ParamsInt("limit")
+	if err != nil {
+		return response.InvalidURLParamResponse(ctx, "limit", err)
+	}
+
+	stockAdditions, err := models.GetAllStockUpdations(c.DB, true, page, limit)
+	if err != nil {
+		return response.DBErrorResponse(ctx, err)
+	}
+	return response.CreateSuccess(ctx, 200, respcode.SUCCESS, stockAdditions)
 }
 
 func (c *StockController) GetStockAdditionsByMedicineID(ctx *fiber.Ctx) error {
@@ -142,4 +142,17 @@ func (c *StockController) GetStockDeductionsByMedicineID(ctx *fiber.Ctx) error {
 	}
 
 	return response.CreateSuccess(ctx, 200, respcode.SUCCESS, stockDeductions)
+}
+
+func (c *StockController) GetMedicineStockByMedicineID(ctx *fiber.Ctx) error {
+	medicineID, err := ctx.ParamsInt("medicine_id")
+	if err != nil {
+		return response.InvalidURLParamResponse(ctx, "medicine_id", err)
+	}
+	stock, err := models.GetMedicineStockByMedicineID(c.DB, medicineID)
+	if err != nil {
+		return response.DBErrorResponse(ctx, err)
+	}
+
+	return response.CreateSuccess(ctx, 200, respcode.SUCCESS, stock)
 }

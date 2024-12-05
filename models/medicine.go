@@ -56,3 +56,31 @@ func GetAllMedicines(db *gorm.DB) ([]Medicine, error) {
 func DeleteMedicine(db *gorm.DB, id int) error {
 	return db.Delete(&Medicine{}, id).Error
 }
+
+func GetAllMedTypes(db *gorm.DB) ([]MedType, error) {
+	var medTypes []MedType
+	err := db.Find(&medTypes).Error
+	return medTypes, err
+}
+
+func GetMedTypeByID(db *gorm.DB, id int) (*MedType, error) {
+	var medType MedType
+	err := db.First(&medType, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &medType, nil
+}
+
+func (m *MedType) Create(db *gorm.DB) error {
+	m.ID = 0 //To prevent id from being set by the client
+	return db.Create(m).Error
+}
+
+func (m *MedType) Update(db *gorm.DB) error {
+	return db.Raw("UPDATE med_types SET type = ? WHERE id = ?", m.Type, m.ID).Error
+}
+
+func DeleteMedType(db *gorm.DB, id int) error {
+	return db.Delete(&MedType{}, id).Error
+}
