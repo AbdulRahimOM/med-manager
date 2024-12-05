@@ -37,7 +37,12 @@ func (c *StockController) UpdateStockUpdation(ctx *fiber.Ctx) error {
 		return errResponse
 	}
 
-	if err := models.UpdateParticularsInAnStockUpdation(c.DB, stockUpdations.ID, stockUpdations.StockChanges); err != nil {
+	stockUpdationID, err := ctx.ParamsInt("id")
+	if err != nil {
+		return response.InvalidURLParamResponse(ctx, "id", err)
+	}
+
+	if err := models.UpdateParticularsInAnStockUpdation(c.DB, stockUpdationID, stockUpdations.StockChanges); err != nil {
 		return response.DBErrorResponse(ctx, err)
 	}
 
@@ -70,17 +75,10 @@ func (c *StockController) AddToStock(ctx *fiber.Ctx) error {
 }
 
 func (c *StockController) GetAllStockAdditions(ctx *fiber.Ctx) error {
-	page, err := ctx.ParamsInt("page")
-	if err != nil {
-		return response.InvalidURLParamResponse(ctx, "page", err)
-	}
+	page := ctx.QueryInt("page", 1)
+	limit, err := ctx.ParamsInt("limit", 10)
 
-	limit, err := ctx.ParamsInt("limit")
-	if err != nil {
-		return response.InvalidURLParamResponse(ctx, "limit", err)
-	}
-
-	stockAdditions, err := models.GetAllStockUpdations(c.DB, true, page, limit)
+	stockAdditions, err := models.GetAllStockUpdations(c.DB, true, (page-1)*limit, limit)
 	if err != nil {
 		return response.DBErrorResponse(ctx, err)
 	}
@@ -92,7 +90,7 @@ func (c *StockController) GetStockAdditionsByMedicineID(ctx *fiber.Ctx) error {
 	if err != nil {
 		return response.InvalidURLParamResponse(ctx, "medicine_id", err)
 	}
-	stockAdditions, err := models.GetStockUpdationParticularsByMedicineID(c.DB, medicineID)
+	stockAdditions, err := models.GetStockUpdationParticularsByMedicineID(c.DB, medicineID, true)
 	if err != nil {
 		return response.DBErrorResponse(ctx, err)
 	}
@@ -106,7 +104,18 @@ func (c *StockController) DeductFromStock(ctx *fiber.Ctx) error {
 		return errResponse
 	}
 
-	if err := stockDeductions.DeductFromStock(c.DB); err != nil {
+	if err, insufficientMedID := stockDeductions.DeductFromStock(c.DB); err != nil {
+		if err == models.ErrInsufficientStock {
+			return response.Response{
+				HttpStatusCode: 400,
+				Status:         false,
+				ResponseCode:   respcode.INSUFFICIENT_STOCK,
+				Error:          err,
+				Data: map[string]int{
+					"medicine_id": insufficientMedID,
+				},
+			}.WriteToJSON(ctx)
+		}
 		return response.DBErrorResponse(ctx, err)
 	}
 
@@ -114,17 +123,10 @@ func (c *StockController) DeductFromStock(ctx *fiber.Ctx) error {
 }
 
 func (c *StockController) GetAllStockDeductions(ctx *fiber.Ctx) error {
-	page, err := ctx.ParamsInt("page")
-	if err != nil {
-		return response.InvalidURLParamResponse(ctx, "page", err)
-	}
+	page := ctx.QueryInt("page", 1)
+	limit, err := ctx.ParamsInt("limit", 10)
 
-	limit, err := ctx.ParamsInt("limit")
-	if err != nil {
-		return response.InvalidURLParamResponse(ctx, "limit", err)
-	}
-
-	stockDeductions, err := models.GetAllStockUpdations(c.DB, false, page, limit)
+	stockDeductions, err := models.GetAllStockUpdations(c.DB, false, (page-1)*limit, limit)
 	if err != nil {
 		return response.DBErrorResponse(ctx, err)
 	}
@@ -136,7 +138,7 @@ func (c *StockController) GetStockDeductionsByMedicineID(ctx *fiber.Ctx) error {
 	if err != nil {
 		return response.InvalidURLParamResponse(ctx, "medicine_id", err)
 	}
-	stockDeductions, err := models.GetStockUpdationParticularsByMedicineID(c.DB, medicineID)
+	stockDeductions, err := models.GetStockUpdationParticularsByMedicineID(c.DB, medicineID, false)
 	if err != nil {
 		return response.DBErrorResponse(ctx, err)
 	}

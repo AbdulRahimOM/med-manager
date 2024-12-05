@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"fmt"
+	"med-manager/domain/request"
 	respcode "med-manager/domain/respcodes"
 	"med-manager/domain/response"
 	"med-manager/models"
@@ -19,10 +21,12 @@ func NewMedicineController(db *gorm.DB) *MedicineController {
 }
 
 func (c *MedicineController) CreateMedicine(ctx *fiber.Ctx) error {
-	medicine := new(models.Medicine)
-	if ok, errResponse := validation.BindAndValidateJSONRequest(ctx, medicine); !ok {
+	medicineReq := new(request.MedicineRequest)
+	if ok, errResponse := validation.BindAndValidateJSONRequest(ctx, medicineReq); !ok {
 		return errResponse
 	}
+
+	medicine := medicineReq.ToMedicine()
 
 	if err := medicine.Create(c.DB); err != nil {
 		return response.DBErrorResponse(ctx, err)
@@ -53,9 +57,16 @@ func (c *MedicineController) GetMedicine(ctx *fiber.Ctx) error {
 }
 
 func (c *MedicineController) UpdateMedicine(ctx *fiber.Ctx) error {
-	medicine := new(models.Medicine)
-	if ok, errResponse := validation.BindAndValidateJSONRequest(ctx, medicine); !ok {
+	medicineReq := new(request.MedicineRequest)
+	if ok, errResponse := validation.BindAndValidateJSONRequest(ctx, medicineReq); !ok {
 		return errResponse
+	}
+
+	medicine := medicineReq.ToMedicine()
+	var err error
+	medicine.ID, err = ctx.ParamsInt("id")
+	if err != nil {
+		return response.InvalidURLParamResponse(ctx, "id", err)
 	}
 
 	if err := medicine.Update(c.DB); err != nil {
@@ -117,6 +128,14 @@ func (c *MedicineController) UpdateMedType(ctx *fiber.Ctx) error {
 	if ok, errResponse := validation.BindAndValidateJSONRequest(ctx, medType); !ok {
 		return errResponse
 	}
+
+	var err error
+	medType.ID, err = ctx.ParamsInt("id")
+	if err != nil {
+		return response.InvalidURLParamResponse(ctx, "id", err)
+	}
+
+	fmt.Println("ID: ", medType.ID)
 
 	if err := medType.Update(c.DB); err != nil {
 		return response.DBErrorResponse(ctx, err)

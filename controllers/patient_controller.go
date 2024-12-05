@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"med-manager/domain/request"
 	respcode "med-manager/domain/respcodes"
 	"med-manager/domain/response"
 	models "med-manager/models"
@@ -19,11 +20,12 @@ func NewPatientController(db *gorm.DB) *PatientController {
 }
 
 func (c *PatientController) CreatePatient(ctx *fiber.Ctx) error {
-	patient := new(models.Patient)
-	if ok, errResponse := validation.BindAndValidateJSONRequest(ctx, patient); !ok {
+	PatientReq := new(request.PatientReq)
+	if ok, errResponse := validation.BindAndValidateJSONRequest(ctx, PatientReq); !ok {
 		return errResponse
 	}
 
+	patient := PatientReq.ToPatient()
 	if err := patient.Create(c.DB); err != nil {
 		return response.DBErrorResponse(ctx, err)
 	}
@@ -32,7 +34,9 @@ func (c *PatientController) CreatePatient(ctx *fiber.Ctx) error {
 }
 
 func (c *PatientController) GetAllPatients(ctx *fiber.Ctx) error {
-	patients, err := models.GetAllPatients(c.DB)
+	page := ctx.QueryInt("page", 1)
+	limit := ctx.QueryInt("limit", 10)
+	patients, err := models.GetAllPatients(c.DB, (page-1)*limit, limit)
 	if err != nil {
 		return response.DBErrorResponse(ctx, err)
 	}
@@ -53,10 +57,18 @@ func (c *PatientController) GetPatient(ctx *fiber.Ctx) error {
 }
 
 func (c *PatientController) UpdatePatient(ctx *fiber.Ctx) error {
-	patient := new(models.Patient)
-	if ok, errResponse := validation.BindAndValidateJSONRequest(ctx, patient); !ok {
+	PatientReq := new(request.PatientReq)
+	if ok, errResponse := validation.BindAndValidateJSONRequest(ctx, PatientReq); !ok {
 		return errResponse
 	}
+
+	patient := PatientReq.ToPatient()
+	var err error
+	patient.ID, err = ctx.ParamsInt("id")
+	if err != nil {
+		return response.InvalidURLParamResponse(ctx, "id", err)
+	}
+
 	if err := patient.Update(c.DB); err != nil {
 		return response.DBErrorResponse(ctx, err)
 	}
@@ -76,11 +88,12 @@ func (c *PatientController) DeletePatient(ctx *fiber.Ctx) error {
 }
 
 func (c *PatientController) CreateVisit(ctx *fiber.Ctx) error {
-	visit := new(models.Visit)
-	if ok, errResponse := validation.BindAndValidateJSONRequest(ctx, visit); !ok {
+	VisitReq := new(request.VisitReq)
+	if ok, errResponse := validation.BindAndValidateJSONRequest(ctx, VisitReq); !ok {
 		return errResponse
 	}
 
+	visit := VisitReq.ToVisit()
 	if err := visit.Create(c.DB); err != nil {
 		return response.DBErrorResponse(ctx, err)
 	}
@@ -89,7 +102,9 @@ func (c *PatientController) CreateVisit(ctx *fiber.Ctx) error {
 }
 
 func (c *PatientController) GetAllVisits(ctx *fiber.Ctx) error {
-	visits, err := models.GetAllVisits(c.DB)
+	page := ctx.QueryInt("page", 1)
+	limit := ctx.QueryInt("limit", 10)
+	visits, err := models.GetAllVisits(c.DB, (page-1)*limit, limit)
 	if err != nil {
 		return response.DBErrorResponse(ctx, err)
 	}
@@ -110,9 +125,16 @@ func (c *PatientController) GetVisit(ctx *fiber.Ctx) error {
 }
 
 func (c *PatientController) UpdateVisit(ctx *fiber.Ctx) error {
-	visit := new(models.Visit)
-	if ok, errResponse := validation.BindAndValidateJSONRequest(ctx, visit); !ok {
+	VisitReq := new(request.VisitReq)
+	if ok, errResponse := validation.BindAndValidateJSONRequest(ctx, VisitReq); !ok {
 		return errResponse
+	}
+
+	visit := VisitReq.ToVisit()
+	var err error
+	visit.ID, err = ctx.ParamsInt("id")
+	if err != nil {
+		return response.InvalidURLParamResponse(ctx, "id", err)
 	}
 	if err := visit.Update(c.DB); err != nil {
 		return response.DBErrorResponse(ctx, err)

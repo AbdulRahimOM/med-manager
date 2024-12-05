@@ -1,11 +1,14 @@
 package models
 
 import (
+	"fmt"
 	"med-manager/domain/response"
 	"time"
 
 	"gorm.io/gorm"
 )
+
+var ErrInsufficientStock = fmt.Errorf("Insufficient stock")
 
 func (sReq *StockUpdateRequest) AddToStock(db *gorm.DB) error {
 	tx := db.Begin()
@@ -47,20 +50,20 @@ func (sReq *StockUpdateRequest) AddToStock(db *gorm.DB) error {
 	return tx.Commit().Error
 }
 
-func (sReq *StockUpdateRequest) DeductFromStock(db *gorm.DB) error {
+func (sReq *StockUpdateRequest) DeductFromStock(db *gorm.DB) (error, int) {
 	tx := db.Begin()
 	if tx.Error != nil {
-		return tx.Error
+		return tx.Error, 0
 	}
 
 	stockUpdation := &StockUpdation{
 		BroughtAt: time.Now(),
-		IsAddtion: true,
+		IsAddtion: false,
 	}
 	err := tx.Create(stockUpdation).Error
 	if err != nil {
 		tx.Rollback()
-		return err
+		return err, 0
 	}
 
 	for _, stockChange := range sReq.StockChanges {
@@ -72,7 +75,20 @@ func (sReq *StockUpdateRequest) DeductFromStock(db *gorm.DB) error {
 		err := tx.Create(stockUpdationParticulars).Error
 		if err != nil {
 			tx.Rollback()
-			return err
+			return err, 0
+		}
+
+		//get current stock
+		var currentStock int
+		err = tx.Raw("SELECT current_stock FROM medicines WHERE id = ?", stockChange.MedicineID).Scan(&currentStock).Error
+		if err != nil {
+			tx.Rollback()
+			return err, 0
+		}
+
+		if currentStock < stockChange.Quantity {
+			tx.Rollback()
+			return ErrInsufficientStock, 0
 		}
 
 		//deduct stockChange.Quantity from Medicine.CurrentStock
@@ -80,11 +96,11 @@ func (sReq *StockUpdateRequest) DeductFromStock(db *gorm.DB) error {
 		err = tx.Model(&medicine).Where("id = ?", stockChange.MedicineID).Update("current_stock", gorm.Expr("current_stock - ?", stockChange.Quantity)).Error
 		if err != nil {
 			tx.Rollback()
-			return err
+			return err, 0
 		}
 	}
 
-	return tx.Commit().Error
+	return tx.Commit().Error, 0
 }
 
 func GetAllStockUpdations(db *gorm.DB, isAddtion bool, offset, limit int) ([]response.GetStockUpdationResponse, error) {
@@ -123,6 +139,12 @@ func DeleteStockUpdation(db *gorm.DB, id int) error {
 	var stockUpdation StockUpdation
 	err := db.Where("id = ?", id).First(&stockUpdation).Error
 	if err != nil {
+		return err
+	}
+
+	var stockUpdationParticulars []StockUpdationParticulars
+	err = db.Where("stock_updation_id = ?", id).Find(&stockUpdationParticulars).Error
+	if err != nil {
 		db.Rollback()
 		return err
 	}
@@ -132,20 +154,28 @@ func DeleteStockUpdation(db *gorm.DB, id int) error {
 		return tx.Error
 	}
 
+	fmt.Println("stockUpdationParticulars: ", stockUpdationParticulars)
+	for i := range stockUpdationParticulars {
+		// adjusting stock to undo the stock updation
+		var stockChangeToDo int
+		if stockUpdation.IsAddtion {
+			stockChangeToDo = -stockUpdationParticulars[i].Quantity
+		} else {
+			stockChangeToDo = stockUpdationParticulars[i].Quantity
+		}
+		var medicine Medicine
+		err = tx.Model(&medicine).Where("id = ?", stockUpdationParticulars[i].MedicineID).Update("current_stock", gorm.Expr("current_stock + ?", stockChangeToDo)).Error
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
 	err = tx.Delete(&StockUpdation{}, id).Error
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
-
-	// err = tx.Delete(&StockUpdationParticulars{}, "stock_updation_id = ?", id).Error
-	// if err != nil {
-	// 	tx.Rollback()
-	// 	return err
-	// }
-
-	// //adjust stockChange.Quantity from Medicine.CurrentStock
-	// var stockUpdationParticulars []StockUpdationParticulars
 
 	return tx.Commit().Error
 }
@@ -190,20 +220,24 @@ func GetStockUpdationParticularsByStockUpdationID(db *gorm.DB, stockUpdationID i
 	return stockUpdationParticulars, nil
 }
 
-func GetStockUpdationParticularsByMedicineID(db *gorm.DB, medicineID int) ([]response.StockUpdationParticulars, error) {
-	var stockUpdationParticulars []response.StockUpdationParticulars
+func GetStockUpdationParticularsByMedicineID(db *gorm.DB, medicineID int, isAddition bool) ([]response.MedicineWiseStockUpdationDetails, error) {
+	var stockUpdationParticulars []response.MedicineWiseStockUpdationDetails
 	query := `
 		SELECT
 			sup.stock_updation_id,
-			sup.brought_at,
-			sup.is_addition,
+			su.brought_at,
 			sup.quantity
 		FROM
 			stock_updation_particulars sup
+		JOIN
+			stock_updations su
+		ON
+			sup.stock_updation_id = su.id
 		WHERE
 			sup.medicine_id = ?
+			AND su.is_addition = ?
 	`
-	err := db.Raw(query, medicineID).Scan(&stockUpdationParticulars).Error
+	err := db.Raw(query, medicineID, isAddition).Scan(&stockUpdationParticulars).Error
 	if err != nil {
 		return nil, err
 	}

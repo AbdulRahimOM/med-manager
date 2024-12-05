@@ -36,9 +36,9 @@ func GetPatientByID(db *gorm.DB, id int) (*Patient, error) {
 	return &patient, nil
 }
 
-func GetAllPatients(db *gorm.DB) ([]Patient, error) {
+func GetAllPatients(db *gorm.DB, offset, limit int) ([]Patient, error) {
 	var patients []Patient
-	err := db.Find(&patients).Error
+	err := db.Raw("SELECT * FROM patients WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT ? OFFSET ?", limit, offset).Scan(&patients).Error
 	return patients, err
 }
 
@@ -52,7 +52,7 @@ type Visit struct {
 	Date      time.Time `json:"date" gorm:"column:date"`
 	Notes     string    `json:"notes" gorm:"column:notes"`
 
-	Patient Patient `json:"patient" gorm:"foreignKey:PatientID;references:ID"`
+	Patient Patient `json:"-" gorm:"foreignKey:PatientID;references:ID"`
 }
 
 func (v *Visit) Create(db *gorm.DB) error {
@@ -72,9 +72,9 @@ func GetVisitByID(db *gorm.DB, id int) (*Visit, error) {
 	return &visit, nil
 }
 
-func GetAllVisits(db *gorm.DB) ([]Visit, error) {
+func GetAllVisits(db *gorm.DB,offset,limit int) ([]Visit, error) {
 	var visits []Visit
-	err := db.Find(&visits).Error
+	err := db.Raw("SELECT * FROM visits ORDER BY date DESC LIMIT ? OFFSET ?", limit, offset).Scan(&visits).Error
 	return visits, err
 }
 

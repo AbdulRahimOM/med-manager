@@ -45,9 +45,9 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 		stock.Put("updations/:id", stockController.UpdateStockUpdation)
 		stock.Delete("updations/:id", stockController.DeleteStockUpdation)
 
-		stock.Get("/medicine/:id", stockController.GetMedicineStockByMedicineID)
-		stock.Get("/medicine/additions/:id", stockController.GetStockAdditionsByMedicineID)
-		stock.Get("/medicine/deductions/:id", stockController.GetStockDeductionsByMedicineID)
+		stock.Get("/medicine/:medicine_id", stockController.GetMedicineStockByMedicineID)
+		stock.Get("/medicine/additions/:medicine_id", stockController.GetStockAdditionsByMedicineID)
+		stock.Get("/medicine/deductions/:medicine_id", stockController.GetStockDeductionsByMedicineID)
 
 	}
 
@@ -62,14 +62,16 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 		patients.Delete("/:id", patientController.DeletePatient)
 
 		// Visit routes
-		visits := app.Group("/visits")
-		{
-			visits.Post("/", patientController.CreateVisit)
-			visits.Get("/", patientController.GetAllVisits)
-			visits.Get("/:id", patientController.GetVisit)
-			visits.Put("/:id", patientController.UpdateVisit)
-			visits.Delete("/:id", patientController.DeleteVisit)
-			visits.Get("/patient/:id", patientController.GetAllVisitsByPatientID)
-		}
+
+	}
+
+	visits := app.Group("/visits")
+	{
+		visits.Post("/", patientController.CreateVisit)
+		visits.Get("/", patientController.GetAllVisits)
+		visits.Get("/:id", patientController.GetVisit)
+		visits.Put("/:id", patientController.UpdateVisit)
+		visits.Delete("/:id", patientController.DeleteVisit)
+		visits.Get("/patient/:id", patientController.GetAllVisitsByPatientID)
 	}
 }

@@ -74,7 +74,6 @@ type custError struct {
 
 func (resp Response) WriteToJSON(c *fiber.Ctx) error {
 	if resp.Error == nil {
-		fmt.Println("resp.HttpStatusCode:", resp.HttpStatusCode)
 		return c.Status(resp.HttpStatusCode).JSON(resp)
 	}
 	newCustError := custError{

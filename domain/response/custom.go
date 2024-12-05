@@ -11,14 +11,11 @@ type GetStockUpdationResponse struct {
 
 type MedicineWiseStockUpdationDetails struct {
 	StockUpdationID int       `json:"stock_updation_id" gorm:"column:stock_updation_id"`
-	UpdationTime    time.Time `json:"updation_time" gorm:"column:updation_time"`
-	IsAddtion       bool      `json:"is_addition" gorm:"column:is_addition"`
+	BroughtAt       time.Time `json:"brought_at" gorm:"column:brought_at"`
 	Quantity        int       `json:"quantity" gorm:"column:quantity"`
 }
 
 type StockUpdationParticulars struct {
-	StockUpdationID int       `json:"stock_updation_id" gorm:"column:stock_updation_id"`
-	Quantity        int       `json:"quantity" gorm:"column:quantity"`
-	IsAddtion       bool      `json:"is_addition" gorm:"column:is_addition"`
-	BroughtAt       time.Time `json:"brought_at" gorm:"column:brought_at"`
+	MedicineID int `json:"medicine_id" gorm:"column:medicine_id"`
+	Quantity   int `json:"quantity" gorm:"column:quantity"`
 }

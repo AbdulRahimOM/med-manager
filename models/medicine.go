@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -28,13 +29,10 @@ type MedType struct {
 
 // Model methods for database operations
 func (m *Medicine) Create(db *gorm.DB) error {
-	m.ID = 0                 //To prevent id from being set by the client
-	m.CreatedAt = time.Now() //,,
 	return db.Create(m).Error
 }
 
 func (m *Medicine) Update(db *gorm.DB) error {
-	m.UpdatedAt = time.Now() //To prevent updated_at from being set by the client
 	return db.Save(m).Error
 }
 
@@ -78,7 +76,15 @@ func (m *MedType) Create(db *gorm.DB) error {
 }
 
 func (m *MedType) Update(db *gorm.DB) error {
-	return db.Raw("UPDATE med_types SET type = ? WHERE id = ?", m.Type, m.ID).Error
+	result:= db.Exec("UPDATE med_types SET type = ? WHERE id = ?", m.Type, m.ID)
+	if result.Error!=nil{
+		return result.Error
+	}
+	if result.RowsAffected==0{
+		return fmt.Errorf("there is no such id")
+	}
+
+	return nil
 }
 
 func DeleteMedType(db *gorm.DB, id int) error {
