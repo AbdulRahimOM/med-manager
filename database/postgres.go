@@ -2,6 +2,7 @@ package database
 
 import (
 	"log"
+	models "med-manager/models"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -26,7 +27,12 @@ func InitDB() (*gorm.DB, error) {
 
 	// Auto migrate models
 	err = db.AutoMigrate(
-	// Add models here
+		&models.Medicine{},
+		&models.MedType{},
+		&models.StockUpdation{},
+		&models.StockUpdationParticulars{},
+		&models.Patient{},
+		&models.Visit{},
 	)
 	if err != nil {
 		return nil, err

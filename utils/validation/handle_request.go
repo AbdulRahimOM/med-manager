@@ -14,18 +14,6 @@ const (
 	queryBindingErrCode = "URL QUERY BINDING ERROR"
 )
 
-type ValidationErrorResponse struct {
-	Status       bool           `json:"status"`
-	ResponseCode string         `json:"resp_code"`
-	Errors       []InvalidField `json:"errors"`
-}
-
-type InvalidField struct {
-	FailedField string      `json:"field"`
-	Tag         string      `json:"tag"`
-	Value       interface{} `json:"value"`
-}
-
 // BindAndValidateRequest binds and validates the request.
 // Req should be a pointer to the request struct.
 func BindAndValidateJSONRequest(c *fiber.Ctx, req interface{}) (bool, error) {
@@ -40,7 +28,7 @@ func BindAndValidateJSONRequest(c *fiber.Ctx, req interface{}) (bool, error) {
 	}
 	if err := validateJSONRequestDetailed(req); err != nil {
 		log.Println("error validating request:", err)
-		return false, c.Status(http.StatusBadRequest).JSON(ValidationErrorResponse{
+		return false, c.Status(http.StatusBadRequest).JSON(response.ValidationErrorResponse{
 			Status:       false,
 			ResponseCode: validationErrCode,
 			Errors:       err,
@@ -61,7 +49,7 @@ func BindAndValidateURLQueryRequest(c *fiber.Ctx, req interface{}) (bool, error)
 	}
 	if err := validateJSONRequestDetailed(req); err != nil {
 		log.Println("error validating request:", err)
-		return false, c.Status(http.StatusBadRequest).JSON(ValidationErrorResponse{
+		return false, c.Status(http.StatusBadRequest).JSON(response.ValidationErrorResponse{
 			Status:       false,
 			ResponseCode: validationErrCode,
 			Errors:       err,
